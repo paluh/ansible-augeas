@@ -35,7 +35,7 @@ options:
     required: false
     choices: [ set, rm, match ]
     description:
-      - 'Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true if case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
+      - 'Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true if case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
   path:
     required: false
     description:
@@ -56,11 +56,6 @@ options:
     required: false
     description:
       - 'Colon-spearated list of directories that modules should be searched in.'
-  validate_filepath:
-    required: false
-    default: yes
-    description:
-      - 'Check if given path matches any file in filesystem.'
 examples:
   - code: 'augeas: path=/files/etc/sudoers/spec[user=\\"sudo\\"]/host_group/command/tag value=PASSWD'
     description: 'Simple value change'
@@ -240,40 +235,17 @@ def parse_commands(commands):
     return parsed
 
 
-class FileNotFound(Exception):
+class ExceptionWithMessage(Exception):
 
-    def __init__(self, augeas_instance, path, command, params):
-        path_parts = path.split('/')
-        if not path.startswith('/files/'):
-            msg = ('File path has to start with /files/ prefix. '
-                   'Augeas was not able to match any file for given path: %s (in: command=%s, params=%s') % (path, command, params)
-        else:
-            path_parts = path.replace('/files/', '').split('/')
-            augeas_path = '/files'
-            file_path = ''
-            for part in path_parts:
-                augeas_path = augeas_path + '/' + part
-                if augeas_instance.match(augeas_path):
-                    file_path = file_path + '/' + part
-            if file_path:
-                msg = ('Augeas was not able to match any file for given path: %s (in: command=%s params=%s). '
-                       '\nClosest path in augeas tree is: %s') % (path, command, params, file_path)
-            else:
-                msg = 'Augeas was not able to match any file for given path: %s (in: command=%s params=%s).' % (path, command, params)
-        msg += ('\n\nYou can check files managed by augeas through "match" command:\n\n'
-                'ansible all -u USERNAME -i INVENTORY_FILE -m augeas -a \'command="match" path="/augeas/files//*" validate_filepath="no"\n\n')
+    def __init__(self, msg, *args, **kwargs):
         self.msg = msg
-        super(FileNotFound, self).__init__(msg)
+        super(Exception, self).__init__(self, msg, *args, **kwargs)
 
 
-class AugeasError(Exception):
+class AugeasError(ExceptionWithMessage):
 
     path = None
     error_type = None
-
-    def __init__(self, msg):
-        self.msg = msg
-        super(AugeasError, self).__init__(msg)
 
     def format_augeas_errors(self, augeas_instance):
         errors = []
@@ -320,41 +292,7 @@ class SetError(CommandError):
     error_type = 'put_failed'
 
 
-def validate_path(augeas_instance, path):
-    subpath = correct_subpath = ''
-    for part in filter(None, path.split('/')):
-        subpath = subpath + '/' + part
-        try:
-            augeas_instance.match(subpath)
-        except RuntimeError:
-            raise PathParseError(augeas_instance, path, correct_subpath)
-        correct_subpath = subpath
-
-def get_file_for_path(augeas_instance, path):
-    subpath = ''
-    filename = None
-    # this is safe as all '/' chars in augeas paths are separators
-    for part in filter(None, path.split('/')):
-        subpath = subpath + '/' + part
-        if augeas_instance.match(subpath):
-            if not filename:
-                try:
-                    filename = augeas_instance.span(subpath)[0]
-                except ValueError:
-                    pass
-    return filename
-
-def execute(augeas_instance, commands, validate_filepath=True):
-    # validate paths
-    for command, params in commands:
-        if not 'path' in params:
-            continue
-        path = params['path']
-        validate_path(augeas_instance, path)
-        if validate_filepath:
-            r = get_file_for_path(augeas_instance, path)
-            if not r:
-                raise FileNotFound(augeas_instance, path, command, params)
+def execute(augeas_instance, commands):
     results = []
     changed = False
     for command, params in commands:
@@ -392,7 +330,6 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            validate_filepath=dict(default='yes', type='bool'),
             command=dict(required=False, choices=['set', 'rm', 'match']),
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
@@ -407,11 +344,6 @@ def main():
         module.fail_json(msg='Could not import python augeas module.'
                              ' Please install augeas related packages and '
                              'augeas python bindings.')
-    if module.params['validate_filepath'] and not augeas.Augeas().match('/augeas/span'):
-        module.fail_json(msg='Installed augeas library version doesn\'t support `span` functionality.'
-                             ' You have to switch off filepath validation (pass validate_filepath=no) '
-                             'if you want to proceed.')
-
     augeas_instance = Augeas(root=module.params['root'], loadpath=module.params['loadpath'],
                              flags=getattr(Augeas, 'ENABLE_SPAN', 0))
     commands = None
@@ -430,9 +362,8 @@ def main():
         except CommandsParseError, e:
             module.fail_json(msg=e.msg)
     try:
-        results, changed = execute(augeas_instance, commands,
-                                   validate_filepath=module.params['validate_filepath'])
-    except (AugeasError, FileNotFound), e:
+        results, changed = execute(augeas_instance, commands)
+    except AugeasError, e:
         module.fail_json(msg=e.msg)
 
     # in case of single command execution return only one result
