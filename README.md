@@ -27,19 +27,16 @@ Options:
   - `loadpath`:
       - required: false
       - description: Colon-spearated list of directories that modules should be searched in.
-  - `validate_filepath`:
-      - required: false
-      - default: yes
-      - description: Check if given path matches any file in filesystem.
 
 Examples:
+
   - Simple value change
 
         - name: Force password on sudo group
           action: augeas path=/files/etc/sudoers/spec[user=\"sudo\"]/host_group/command/tag value=PASSWD
 
   - Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config
-    
+
         - name: Check wether given user is listed in sshd_config
           action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\"${user}\"]"
           register: user_entry
@@ -64,3 +61,11 @@ Examples:
                                    set /files/etc/network/interfaces/iface[.=\"eth0\"]/method manual
                                    set /files/etc/network/interfaces/iface[.=\"eth0\"]/pre-up "ifconfig $IFACE up"
                                    set /files/etc/network/interfaces/iface[.=\"eth0\"]/pre-down "ifconfig $IFACE down"'
+
+Debugging:
+
+  - If you want to check files which are accessible by ansible on server just run:
+
+        ansible all -u USERNAME -i INVENTORY_FILE -m augeas -a \'command="match" path="/augeas/files//*"
+
+  - In case of any errors during augeas execution of your operations this module will return content of `/augeas//error` and you should be able to find problems related to your actions
