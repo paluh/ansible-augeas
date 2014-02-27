@@ -64,7 +64,7 @@ Examples:
 
 Debugging:
 
-  - If you want to check files which are accessible by ansible on server just run:
+  - If you want to check files which are accessible by augeas on server just run:
 
         ansible all -u USERNAME -i INVENTORY_FILE -m augeas -a \'command="match" path="/augeas/files//*"
 
