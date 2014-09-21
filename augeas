@@ -29,7 +29,7 @@ description:
 version_added: "1.1"
 requirements:
   - augeas + lenses (augeas-lenses on Debian)
-  - augeas python bindings (python-augeas on Debian)
+  - augeas python bindings (python-augeas on Debian, note: on Debian Wheezy you also need to install libpython2.7, since python-augeas package wrongly does not list it as a requirement)
 options:
   command:
     required: false
