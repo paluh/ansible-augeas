@@ -41,7 +41,7 @@ Examples:
           action: augeas command="match" path="/files/etc/ssh/sshd_config/AllowUsers/*"
           register: ssh_allowed_users
 
-      you can expect value of this shape to be set in `ssh_assowed_users` variable:
+      you can expect value of this shape to be set in `ssh_allowed_users` variable:
 
         {"changed": false,
          "result": [{"label": "/files/etc/ssh/sshd_config/AllowUsers/1",
@@ -53,7 +53,7 @@ Examples:
 
   - Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config
 
-        - name: Check wether given user is listed in sshd_config
+        - name: Check whether given user is listed in sshd_config
           action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\"{{ user }}\"]"
           register: user_entry
         - name: Allow user to login through ssh
