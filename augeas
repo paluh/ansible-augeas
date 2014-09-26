@@ -35,7 +35,7 @@ options:
     required: false
     choices: [ set, rm, match ]
     description:
-      - 'Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true if case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
+      - 'Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
   path:
     required: false
     description:
@@ -62,11 +62,11 @@ examples:
 
   - code: |
       - name: Check wether given user is listed in sshd_config
-        action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\\"${user}\\"]"
+        action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\\"{{ user }}\\"]"
         register: user_entry
       - name: Allow user to login through ssh
-        action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="${user}"
-        only_if: "not ${user_entry.result}"
+        action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
+        when: "user_entry.result|length == 0"
     description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
 
   - code: |

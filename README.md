@@ -58,7 +58,7 @@ Examples:
           register: user_entry
         - name: Allow user to login through ssh
           action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
-          only_if: "user_entry.result|length == 0"
+          when: "user_entry.result|length == 0"
 
   - Bulk command execution
 
