@@ -11,7 +11,7 @@ Options:
   - `command`
       - required: false
       - choices: [`set`, `rm`, `match`]
-      - description: Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true if case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
+      - description: Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
   - `path`:
       - required: false
       -  description: Variable path.
