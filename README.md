@@ -35,14 +35,30 @@ Examples:
         - name: Force password on sudo group
           action: augeas path=/files/etc/sudoers/spec[user=\"sudo\"]/host_group/command/tag value=PASSWD
 
+  - Match command result - given below action
+
+        - name: Fetch sshd allowed users
+          action: augeas command="match" path="/files/etc/ssh/sshd_config/AllowUsers/*"
+          register: ssh_allowed_users
+
+      you can expect value of this shape to be set in `ssh_assowed_users` variable:
+
+        {"changed": false,
+         "result": [{"label": "/files/etc/ssh/sshd_config/AllowUsers/1",
+                     "value": "paluh"},
+                    {"label": "/files/etc/ssh/sshd_config/AllowUsers/2",
+                     "value": "foo"},
+                    {"label": "/files/etc/ssh/sshd_config/AllowUsers/3",
+                     "value": "bar"}]}
+
   - Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config
 
         - name: Check wether given user is listed in sshd_config
-          action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\"${user}\"]"
+          action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\"{{ user }}\"]"
           register: user_entry
         - name: Allow user to login through ssh
-          action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="${user}"
-          only_if: "not ${user_entry.result}"
+          action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
+          only_if: "user_entry.result|length == 0"
 
   - Bulk command execution
 
