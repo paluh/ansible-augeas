@@ -35,7 +35,7 @@ Examples:
         - name: Force password on sudo group
           action: augeas path=/files/etc/sudoers/spec[user=\"sudo\"]/host_group/command/tag value=PASSWD
 
-  - Match command result - given below action
+  - Results `match` of command - given below action:
 
         - name: Fetch sshd allowed users
           action: augeas command="match" path="/files/etc/ssh/sshd_config/AllowUsers/*"
