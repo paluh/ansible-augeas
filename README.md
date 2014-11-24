@@ -9,17 +9,17 @@ Requirements:
 
 Options:
   - `command`
-      - required: false
+      - required: when `commands` is not used
       - choices: [`set`, `rm`, `match`]
       - description: Whether given path should be modified, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
   - `path`:
-      - required: false
-      -  description: Variable path.
+      - required: when any `command` is used
+      - description: Variable path.
   - `value`:
-      - required: false
-      - description: Variable value (required for `set` command).
+      - required: when `command = set`
+      - description: Variable value.
   - `commands`
-      - required: false
+      - required: when `command` is not used
       - description: Execute many commands at once (some configuration entries have to be created/updated at once - it is impossible to split them across multiple "set" calls). Standard shell quoting is allowed (rember to escape all quotes inside pahts/values - check last example). Expected formats: "set PATH VALUE", "rm PATH" or "match PATH" (look into examples for more details). You can separate commands with any white characters (new lines, spaces etc.). Result is passed through `result` attribute and contains list of tuples: (command, command result).
   - `root`:
       - required: false
