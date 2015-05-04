@@ -92,7 +92,9 @@ try:
     import augeas
 except ImportError:
     augeas = None
+from collections import namedtuple
 import ctypes
+import re
 import shlex
 
 if augeas:
@@ -174,12 +176,60 @@ class UnknownCommand(CommandsParseError):
         else:
             msg = 'Incorrect command: "%s"' % token
         self.msg = msg
-        return super(UnknownCommand, self).__init__(msg)
+        super(UnknownCommand, self).__init__(msg)
+
+
+class ParamParseError(CommandsParseError):
+
+    def __init__(self, param, value, expected):
+        super(ParamParseError,
+              self).__init__('Given %(param)s value: %(value)s doesn\'t match expected '
+                             'value: %(expected)s' % {'param': repr(param),
+                                                      'value': repr(value),
+                                                      'expected': unicode(expected)})
 
 
 class TokenizerError(CommandsParseError):
 
     pass
+
+
+class ParamParser(namedtuple('ParamValidator', ['name', 'validator'])):
+
+    def __new__(cls, name, validator):
+        return super(ParamParser, cls).__new__(cls, name, validator)
+
+    def __call__(self, value):
+        raise NotImplementedError('You should validated value here and return cleaned result')
+
+
+class RegexParser(ParamParser):
+
+    def __new__(cls, name, pattern):
+        validator = re.compile(pattern)
+        return super(RegexParser, cls).__new__(cls, name, validator)
+
+    def __call__(self, value):
+        if self.validator.match(value) is None:
+            raise ParamParseError(self.name, value, 're.compile(%s)' % repr(self.validator.pattern))
+        return value
+
+class AnythingParser(RegexParser):
+
+    def __new__(cls, name):
+        return super(AnythingParser, cls).__new__(cls, name, '.*')
+
+
+class NonEmptyParser(RegexParser):
+
+    def __new__(cls, name):
+        return super(NonEmptyParser, cls).__new__(cls, name, '.+')
+
+
+class OneOfParser(RegexParser):
+
+    def __new__(cls, name, patterns):
+        return super(OneOfParser, cls).__new__(cls, name, '(%s)' % '|'.join(patterns))
 
 
 def parse_commands(commands):
@@ -206,32 +256,41 @@ def parse_commands(commands):
     ...
     MissingArgument: Missing argument "path" in "rm" statement - already parsed statements:
     set /path ''
-
+    >>> assert (parse_commands("ins alias before /path") == \
+                [('ins', {'path': '/path', 'where': 'before', 'label': 'alias'})])
+    >>> parse_commands("ins alias bfore /path")
+    Traceback (most recent call last):
+    ...
+    CommandsParseError: Error parsing parameter value of command "ins":
+    Given 'where' value: 'bfore' doesn't match expected value: re.compile('(before|after)')
     """
+    path_parser = NonEmptyParser('path')
     COMMANDS = {
-        'set': ['path', 'value'],
-        'rm': ['path'],
-        'match': ['path'],
+        'set': [path_parser, AnythingParser('value')],
+        'rm': [path_parser],
+        'match': [path_parser],
+        'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
     }
     try:
         tokens = iter(shlex.split(commands, comments=False))
     except ValueError, e:
         raise TokenizerError("Commands parser error (commands should be correctly quoted strings): %s" % e.args[0])
     parsed = []
-    _missing = object()
-    command = next(tokens, _missing)
-    while command is not _missing:
+    for command in tokens:
         if command not in COMMANDS:
             raise UnknownCommand(command, parsed)
         params = {}
-        for name in COMMANDS[command]:
+        for parser in COMMANDS[command]:
             try:
                 value = tokens.next()
             except StopIteration:
-                raise MissingArgument(command, name, parsed)
-            params[name] = value
+                raise MissingArgument(command, parser.name, parsed)
+            try:
+                params[parser.name] = parser(value)
+            except ParamParseError, e:
+                raise CommandsParseError('Error parsing parameter value of command "%(command)s":\n%(exception)s' %
+                                         {'command': command, 'exception': e})
         parsed.append((command, params))
-        command = next(tokens, _missing)
     return parsed
 
 
@@ -315,6 +374,12 @@ def execute(augeas_instance, commands):
                 result = changed = True
             else:
                 result = False
+        elif command == 'ins':
+            path = params['path']
+            label = params['label']
+            where = params['where']
+            augeas_instance.insert(path, label, where == 'before')
+            result = changed = True
         else: # match
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
@@ -330,7 +395,7 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            command=dict(required=False, choices=['set', 'rm', 'match']),
+            command=dict(required=False, choices=['set', 'rm', 'match', 'ins']),
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
             commands=dict(default=None),
@@ -373,7 +438,7 @@ def main():
     module.exit_json(changed=changed, result=results)
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+ this is magic, see lib/ansible/module_common.py
+<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 main()
