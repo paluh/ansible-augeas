@@ -82,7 +82,7 @@ Examples:
                                     set /files/etc/hosts/01/canonical pigiron.example.com
                                     set /files/etc/hosts/01/alias[1] pigiron
                                     set /files/etc/hosts/01/alias[2] piggy'
-  - Insert example - not really idempotent! You should care about making it safe
+  - Insert example
 
         - name: Turn on ssh agent forwarding
           action: augeas commands='ins ForwardAgent before "/files/etc/ssh/sshd_config"
