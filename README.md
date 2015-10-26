@@ -11,7 +11,9 @@ Options:
   - `command`
       - required: when `commands` is not used
       - choices: [`set`, `ins`, `rm`, `match`]
-      - description: Whether given path should be modified, inserted, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
+      - description: Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched.
+        Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
+        Every augeas action is a separate augeas session, so `ins` command has probably only sens in bulk mode (when command=`commands`)
   - `path`:
       - required: when any `command` is used
       - description: Variable path.
@@ -22,7 +24,8 @@ Options:
       - required: when `command = ins`
       - description: Label for new node.
   - `where`:
-      - required: when `command = ins`
+      - required: false
+      - default: 'after'
       - choices: [`before`, `after`]
       - description: Position of node insertion against given `path`.
   - `commands`
@@ -74,6 +77,10 @@ Examples:
                                     set /files/etc/hosts/01/canonical pigiron.example.com
                                     set /files/etc/hosts/01/alias[1] pigiron
                                     set /files/etc/hosts/01/alias[2] piggy'
+  - Insert example
+        - name: Turn on ssh agent forwarding
+          action: augeas commands='ins ForwardAgent before "/files/etc/ssh/sshd_config"
+                                   set "/files/etc/ssh/sshd_config/ForwardAgent" "yes"'
 
   - Correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\"eth0\"])
 

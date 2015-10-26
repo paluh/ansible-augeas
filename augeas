@@ -408,6 +408,8 @@ def main():
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
             commands=dict(default=None),
+            where=dict(default=None),
+            label=dict(default=None),
         ),
         mutually_exclusive=[['commands', 'command'], ['commands', 'value'],
                             ['commands', 'path']],
@@ -423,10 +425,17 @@ def main():
     commands = None
     if module.params['command'] is not None:
         command = module.params['command']
-        if (command == 'set') != (module.params['value'] is not None):
-            module.fail_json(msg='You should use "value" argument with "set" command.')
         if command == 'set':
+            if module.params['value'] is None:
+                module.fail_json(msg='You should use "value" argument with "set" command.')
             params = {'path': module.params['path'], 'value': module.params['value']}
+        elif command == 'ins':
+            if module.params['label'] is None:
+                module.fail_json(msg='You have to use "label" argument with "ins" command.')
+            if module.params['path'] is None:
+                module.fail_json(msg='You have to use "path" argument with "ins" command.')
+            params = {'label': module.params['label'], 'path': module.params['path'],
+                      'where': module.params['where'] or 'before'}
         else: # rm or match
             params = {'path': module.params['path']}
         commands = [(command, params)]
