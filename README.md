@@ -16,6 +16,7 @@ Options:
          Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched.
 
         Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
+
         Every augeas action is a separate augeas session, so `ins` command has probably only sens in bulk mode (when command=`commands`)
 
   - `path`:
