@@ -279,6 +279,7 @@ def parse_commands(commands):
         'rm': [path_parser],
         'match': [path_parser],
         'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
+        'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')]
     }
     try:
         tokens = iter(shlex.split(commands, comments=False))
@@ -360,6 +361,11 @@ class SetError(CommandError):
     error_type = 'put_failed'
 
 
+class InsertError(CommandError):
+
+    pass
+
+
 def execute(augeas_instance, commands):
     results = []
     changed = False
@@ -387,8 +393,16 @@ def execute(augeas_instance, commands):
             path = params['path']
             label = params['label']
             where = params['where']
-            augeas_instance.insert(path, label, where == 'before')
+            try:
+                augeas_instance.insert(path, label, where == 'before')
+            except ValueError:
+                raise InsertError(command, params, augeas_instance)
             result = changed = True
+        elif command == 'transform':
+            lens = params['lens']
+            file_ = params['file']
+            excl = params['filter'] == 'excl'
+            augeas_instance.transform(lens, file_, excl)
         else: # match
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
@@ -410,6 +424,9 @@ def main():
             commands=dict(default=None),
             where=dict(default=None),
             label=dict(default=None),
+            lens=dict(default=None),
+            file=dict(defulat=None),
+            filter=dict(default=None)
         ),
         mutually_exclusive=[['commands', 'command'], ['commands', 'value'],
                             ['commands', 'path']],
@@ -436,6 +453,9 @@ def main():
                 module.fail_json(msg='You have to use "path" argument with "ins" command.')
             params = {'label': module.params['label'], 'path': module.params['path'],
                       'where': module.params['where'] or 'before'}
+        elif command == 'transform':
+            params = {'lens': module.params['lens'], 'file': module.params['file'],
+                      'filter': module.params['filter']}
         else: # rm or match
             params = {'path': module.params['path']}
         commands = [(command, params)]
