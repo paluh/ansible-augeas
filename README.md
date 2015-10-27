@@ -1,7 +1,7 @@
 ansible-augeas
 ==============
 
-Augeas module which exposes simple API for `match`, `set` and `rm` operations. You can execute commands one by one or in chunk.
+Augeas module which exposes simple API for `match`, `set`, `rm` and `ins` operations. Additionally it allows lens loading through `transform` operation. You can execute commands one by one or in chunk (some of them are probably sensible only in bulk mode e.g. `ins` and `transform`).
 
 Requirements:
   - augeas
@@ -10,7 +10,7 @@ Requirements:
 Options:
   - `command`
       - required: when `commands` is not used
-      - choices: [`set`, `ins`, `rm`, `match`]
+      - choices: [`set`, `ins`, `rm`, `match`, `transform`]
       - description:
 
          Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched.
@@ -82,6 +82,12 @@ Examples:
                                     set /files/etc/hosts/01/canonical pigiron.example.com
                                     set /files/etc/hosts/01/alias[1] pigiron
                                     set /files/etc/hosts/01/alias[2] piggy'
+  - Transform example (__I've noticed strange behaviour of transform and operations. Only `set` really works with it currently.__)
+
+        - name: Modify sshd_config in custom location
+          action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/home/sshd_config"
+                                   set "/files/home/paluh/programming/ansible/home/sshd_config/ForwardAgent" "yes"'
+
   - Insert example
 
         - name: Turn on ssh agent forwarding
