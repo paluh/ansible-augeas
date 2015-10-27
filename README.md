@@ -82,7 +82,7 @@ Examples:
                                     set /files/etc/hosts/01/canonical pigiron.example.com
                                     set /files/etc/hosts/01/alias[1] pigiron
                                     set /files/etc/hosts/01/alias[2] piggy'
-  - Transform example (__I've noticed strange behaviour of transform and operations. Only `set` really works with it currently.__)
+  - Transform example (__I've noticed strange behaviour of transform and other operations. Only `set` really works with it currently.__)
 
         - name: Modify sshd_config in custom location
           action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/home/sshd_config"
