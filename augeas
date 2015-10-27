@@ -403,6 +403,7 @@ def execute(augeas_instance, commands):
             file_ = params['file']
             excl = params['filter'] == 'excl'
             augeas_instance.transform(lens, file_, excl)
+            augeas_instance.load()
         else: # match
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
