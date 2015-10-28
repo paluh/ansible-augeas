@@ -82,7 +82,7 @@ Examples:
                                     set /files/etc/hosts/01/canonical pigiron.example.com
                                     set /files/etc/hosts/01/alias[1] pigiron
                                     set /files/etc/hosts/01/alias[2] piggy'
-  - Transform examples - _it is important to load files after transformations_
+  - Transform examples - __it is important to load files after transformations__.
     You have to be aware that `load` command will "remove everything underneath
     `/augeas/files` and `/files`, regardless of whether any entries have been
     modified or not" and that `load` is costly operation. You should order your
