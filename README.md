@@ -84,8 +84,9 @@ Examples:
                                     set /files/etc/hosts/01/alias[2] piggy'
   - Transform examples - _it is important to load files after transformations_
     You have to be aware that `load` command will "remove everything underneath
-     `/augeas/files` and `/files`, regardless of whether any entries have been modified or not". You should order your
-    commands and put `transforms` and `load` before any other transformations.
+    `/augeas/files` and `/files`, regardless of whether any entries have been
+    modified or not" and that `load` is costly operation. You should order your
+    commands and put `transforms`, then `load` and then other transformations.
 
 
         - name: Modify sshd_config in custom location
