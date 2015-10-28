@@ -10,7 +10,7 @@ Requirements:
 Options:
   - `command`
       - required: when `commands` is not used
-      - choices: [`set`, `ins`, `rm`, `match`, `transform`]
+      - choices: [`set`, `ins`, `rm`, `match`, `transform`, `load`]
       - description:
 
          Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched.
@@ -82,11 +82,16 @@ Examples:
                                     set /files/etc/hosts/01/canonical pigiron.example.com
                                     set /files/etc/hosts/01/alias[1] pigiron
                                     set /files/etc/hosts/01/alias[2] piggy'
-  - Transform example
+  - Transform examples - _it is important to load files after transformations_
+    You have to be aware that `load` command will "remove everything underneath
+     `/augeas/files` and `/files`, regardless of whether any entries have been modified or not". You should order your
+    commands and put `transforms` and `load` before any other transformations.
+
 
         - name: Modify sshd_config in custom location
           action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/tests/sshd_config"
-                                   set "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers" "paluh"'
+                                   load
+                                   match "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers/*"'
 
   - Insert example
 

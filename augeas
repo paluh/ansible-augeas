@@ -279,7 +279,8 @@ def parse_commands(commands):
         'rm': [path_parser],
         'match': [path_parser],
         'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
-        'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')]
+        'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')],
+        'load': []
     }
     try:
         tokens = iter(shlex.split(commands, comments=False))
@@ -403,6 +404,7 @@ def execute(augeas_instance, commands):
             file_ = params['file']
             excl = params['filter'] == 'excl'
             augeas_instance.transform(lens, file_, excl)
+        elif command == 'load':
             augeas_instance.load()
         else: # match
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
@@ -419,7 +421,7 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            command=dict(required=False, choices=['set', 'rm', 'match', 'ins']),
+            command=dict(required=False, choices=['set', 'rm', 'match', 'ins', 'transform', 'load']),
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
             commands=dict(default=None),
@@ -457,6 +459,8 @@ def main():
         elif command == 'transform':
             params = {'lens': module.params['lens'], 'file': module.params['file'],
                       'filter': module.params['filter']}
+        elif command == 'load':
+            params = {}
         else: # rm or match
             params = {'path': module.params['path']}
         commands = [(command, params)]
