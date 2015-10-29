@@ -112,7 +112,7 @@ if augeas:
     # This code is copied from current devel branch of python-augeas
 
     # check whether augeas library supports span
-    if augeas.Augeas().match('/augeas/span'):
+    if augeas.Augeas(flags=getattr(Augeas, 'NO_MODL_AUTOLOAD', 0)).match('/augeas/span'):
         if not hasattr(augeas.Augeas, 'span'):
             class Augeas(augeas.Augeas):
 
