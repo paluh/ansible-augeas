@@ -2,4 +2,8 @@
 galaxy_info:
   author: Tomasz Rybarczyk
   description: Partial implementation of augeas commands
+  license: open source
+  platforms: []
+  galaxy_tags: []
 
+dependencies: []
