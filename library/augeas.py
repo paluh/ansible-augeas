@@ -33,13 +33,13 @@ requirements:
 options:
   command:
     required: false
-    choices: [ set, ins, rm, match ]
+    choices: [ set, ins, rm, match, lensmatch ]
     description:
-      - 'Whether given path should be modified, inserted, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
+      - 'Whether given path should be modified, inserted, removed or matched. Command "match" (and "lensmatch") passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
   path:
     required: false
     description:
-      - 'Variable path.'
+      - 'Variable path. With `lensmatch`, it is the relative path within the file tree.'
   value:
     required: false
     description:
@@ -53,6 +53,14 @@ options:
     choices: [before, after]
     description:
       - 'Position of node insertion against given path.'
+  lens:
+    required: false
+    description:
+      - 'Augeas lens to be loaded.'
+  file:
+    required: false
+    description:
+      - 'File to parse.'
   commands:
     required: false
     description:
@@ -77,6 +85,9 @@ examples:
         action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
         when: "user_entry.result|length == 0"
     description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
+
+  - code: 'action: augeas commands="lensmatch" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"'
+    description: Modify sshd_config in custom location
 
   - code: |
       - name: Add new host to /etc/hosts

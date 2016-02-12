@@ -10,10 +10,10 @@ Requirements:
 Options:
   - `command`
       - required: when `commands` is not used
-      - choices: [`set`, `ins`, `rm`, `match`, `transform`, `load`]
+      - choices: [`set`, `ins`, `rm`, `match`, `lensmatch`, `transform`, `load`]
       - description:
 
-         Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched.
+         Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched. _lensmatch_ is an extended version of match (with slightly different usage), allowing to specify a lens to parse the file
 
         Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
 
@@ -21,7 +21,7 @@ Options:
 
   - `path`:
       - required: when any `command` is used
-      - description: Variable path.
+      - description: Variable path. With `lensmatch`, it is the relative path within the file tree.
   - `value`:
       - required: when `command = set`
       - description: Variable value.
@@ -33,6 +33,12 @@ Options:
       - default: 'after'
       - choices: [`before`, `after`]
       - description: Position of node insertion against given `path`.
+  - `lens`:
+     - required: when `command = lensmatch`
+     - description: Augeas lens to be loaded.
+  - `file`:
+     - required: when `command = lensmatch`
+     - description: File to parse.
   - `commands`
       - required: when `command` is not used
       - description: Execute many commands at once (some configuration entries have to be created/updated at once - it is impossible to split them across multiple "set" calls). Standard shell quoting is allowed (rember to escape all quotes inside pahts/values - check last example). Expected formats: "set PATH VALUE", "rm PATH" or "match PATH" (look into examples for more details). You can separate commands with any white characters (new lines, spaces etc.). Result is passed through `result` attribute and contains list of tuples: (command, command result).
@@ -93,6 +99,13 @@ Examples:
           action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/tests/sshd_config"
                                    load
                                    match "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers/*"'
+
+  - Lensmatch example - Is just a simplified command to match against files in
+    non-standard locations. In particular, allows example above can be written
+    more concisely.
+
+        - name: Modify sshd_config in custom location
+          action: augeas commands="lensmatch" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
 
   - Insert example
 
