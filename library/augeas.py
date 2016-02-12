@@ -410,6 +410,7 @@ def execute(augeas_instance, commands):
             if params['lens'] :
                 augeas_instance.transform(params['lens'], params['file'])
                 augeas_instance.load()
+                params['path'] = "/files%s/%s" % ( params['file'] , params['path'] )
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
 
