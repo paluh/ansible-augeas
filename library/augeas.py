@@ -39,7 +39,7 @@ options:
   path:
     required: false
     description:
-      - 'Variable path.'
+      - 'Variable path. With `lens` and `file`, it is the relative path within the file tree.'
   value:
     required: false
     description:
@@ -53,6 +53,14 @@ options:
     choices: [before, after]
     description:
       - 'Position of node insertion against given path.'
+  lens:
+    required: false
+    description:
+      - 'Augeas lens to be loaded.'
+  file:
+    required: false
+    description:
+      - 'File to parse.'
   commands:
     required: false
     description:
@@ -77,6 +85,9 @@ examples:
         action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
         when: "user_entry.result|length == 0"
     description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
+
+  - code: 'action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"'
+    description: Modify sshd_config in custom location
 
   - code: |
       - name: Add new host to /etc/hosts
@@ -105,6 +116,7 @@ from collections import namedtuple
 import ctypes
 import re
 import shlex
+import operator
 
 if augeas:
     # Augeas C API `aug_span` function was introduced on the begining of 2011
@@ -372,6 +384,13 @@ def execute(augeas_instance, commands):
     changed = False
     for command, params in commands:
         result = None
+        if params.has_key('lens') and params.has_key('file'):
+            lens = params['lens']
+            file_ = params['file']
+            params['path'] = "/files%s/%s" % ( file_ , params['path'] )
+            if command != 'transform':
+                augeas_instance.transform(lens, file_)
+                augeas_instance.load()
         if command == 'set':
             path = params['path']
             value = params['value']
@@ -400,14 +419,12 @@ def execute(augeas_instance, commands):
                 raise InsertError(command, params, augeas_instance)
             result = changed = True
         elif command == 'transform':
-            lens = params['lens']
-            file_ = params['file']
             excl = params['filter'] == 'excl'
             augeas_instance.transform(lens, file_, excl)
         elif command == 'load':
             augeas_instance.load()
         else: # match
-            result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
+            result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(params['path'])]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
 
     try:
@@ -463,6 +480,11 @@ def main():
             params = {}
         else: # rm or match
             params = {'path': module.params['path']}
+        if operator.xor( bool(module.params['lens']) , bool(module.params['file']) ):
+            module.fail_json(msg='Both "lens" and "file" must be defined.')
+        if module.params['lens'] and module.params['file']:
+            params['lens'] = module.params['lens']
+            params['file'] = module.params['file']
         commands = [(command, params)]
     else:
         try:
