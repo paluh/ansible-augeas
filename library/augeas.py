@@ -277,7 +277,8 @@ def parse_commands(commands):
     COMMANDS = {
         'set': [path_parser, AnythingParser('value')],
         'rm': [path_parser],
-        'match': [path_parser, ParamParser('lens'), ParamParser('file')],
+        'match': [path_parser],
+        'lensmatch': [path_parser, NonEmptyParser('lens'), NonEmptyParser('file')],
         'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
         'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')],
         'load': []
@@ -406,11 +407,11 @@ def execute(augeas_instance, commands):
             augeas_instance.transform(lens, file_, excl)
         elif command == 'load':
             augeas_instance.load()
+        elif command == 'lensmatch':
+            augeas_instance.transform(params['lens'], params['file'])
+            augeas_instance.load()
+            result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(params['path'])]
         else: # match
-            if params['lens'] :
-                augeas_instance.transform(params.pop('lens'), params['file'])
-                augeas_instance.load()
-                params['path'] = "/files%s/%s" % ( params.pop('file') , params['path'] )
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
 
@@ -425,7 +426,7 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            command=dict(required=False, choices=['set', 'rm', 'match', 'ins', 'transform', 'load']),
+            command=dict(required=False, choices=['set', 'rm', 'match', 'lensmatch', 'ins', 'transform', 'load']),
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
             commands=dict(default=None),
@@ -465,8 +466,11 @@ def main():
                       'filter': module.params['filter']}
         elif command == 'load':
             params = {}
+        elif command == 'lensmatch':
+            params = {'lens': module.params['lens'], 'file': module.params['file']}
+            params['path'] = "/files%s/%s" % ( params['file'] , module.params['path'] )
         else: # rm or match
-            params = {'path': module.params['path'], 'lens': module.params['lens'], 'file': module.params['file'}
+            params = {'path': module.params['path']}
         commands = [(command, params)]
     else:
         try:
