@@ -292,6 +292,7 @@ def parse_commands(commands):
         'match': [path_parser],
         'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
         'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')],
+        'edit': [NonEmptyParser('label'), AnythingParser('value'), path_parser, AnythingParser('lens'), AnythingParser('file')],
         'load': []
     }
     try:
@@ -438,7 +439,7 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            command=dict(required=False, choices=['set', 'rm', 'match', 'ins', 'transform', 'load']),
+            command=dict(required=False, choices=['set', 'rm', 'match', 'ins', 'edit', 'transform', 'load']),
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
             commands=dict(default=None),
