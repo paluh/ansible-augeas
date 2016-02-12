@@ -419,6 +419,25 @@ def execute(augeas_instance, commands):
             except ValueError:
                 raise InsertError(command, params, augeas_instance)
             result = changed = True
+        elif command == 'edit':
+            label = params['label']
+            path = params['path']
+            node = augeas_instance.match("%s/%s" % (os.path.dirname(path), label))
+            if not node:
+                try:
+                    node = [ augeas_instance.insert(params['path'], label, False) ]
+                except ValueError:
+                    raise InsertError(command, params, augeas_instance)
+            path = "%s/%s" % (os.path.dirname(path), label)
+            value = params['value']
+            if augeas_instance.get(path) != value:
+                try:
+                    augeas_instance.set(path, value)
+                except ValueError:
+                    raise SetError(command, params, augeas_instance)
+                result = changed = True
+            else:
+                result = False
         elif command == 'transform':
             excl = params['filter'] == 'excl'
             augeas_instance.transform(lens, file_, excl)
@@ -474,6 +493,15 @@ def main():
                 module.fail_json(msg='You have to use "path" argument with "ins" command.')
             params = {'label': module.params['label'], 'path': module.params['path'],
                       'where': module.params['where'] or 'before'}
+        elif command == 'edit':
+            if module.params['label'] is None:
+                module.fail_json(msg='You have to use "label" argument with "edit" command.')
+            if module.params['path'] is None:
+                module.fail_json(msg='You have to use "path" argument with "edit" command.')
+            if module.params['value'] is None:
+                module.fail_json(msg='You have to use "value" argument with "edit" command.')
+            params = {'label': module.params['label'], 'path': module.params['path'],
+                      'value': module.params['value']}
         elif command == 'transform':
             params = {'lens': module.params['lens'], 'file': module.params['file'],
                       'filter': module.params['filter']}
