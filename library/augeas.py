@@ -407,6 +407,9 @@ def execute(augeas_instance, commands):
         elif command == 'load':
             augeas_instance.load()
         else: # match
+            if params['lens'] :
+                augeas_instance.transform(params['lens'], params['file'])
+                augeas_instance.load()
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
 
