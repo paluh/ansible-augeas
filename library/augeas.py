@@ -277,7 +277,7 @@ def parse_commands(commands):
     COMMANDS = {
         'set': [path_parser, AnythingParser('value')],
         'rm': [path_parser],
-        'match': [path_parser],
+        'match': [path_parser, ParamParser('lens'), ParamParser('file')],
         'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
         'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')],
         'load': []
@@ -465,7 +465,7 @@ def main():
         elif command == 'load':
             params = {}
         else: # rm or match
-            params = {'path': module.params['path']}
+            params = {'path': module.params['path'], 'lens': module.params['lens'], 'file': module.params['file'}
         commands = [(command, params)]
     else:
         try:
