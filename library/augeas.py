@@ -33,13 +33,13 @@ requirements:
 options:
   command:
     required: false
-    choices: [ set, ins, rm, match, lensmatch ]
+    choices: [ set, ins, rm, match ]
     description:
-      - 'Whether given path should be modified, inserted, removed or matched. Command "match" (and "lensmatch") passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
+      - 'Whether given path should be modified, inserted, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
   path:
     required: false
     description:
-      - 'Variable path. With `lensmatch`, it is the relative path within the file tree.'
+      - 'Variable path. With `lens` and `file`, it is the relative path within the file tree.'
   value:
     required: false
     description:
@@ -86,7 +86,7 @@ examples:
         when: "user_entry.result|length == 0"
     description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
 
-  - code: 'action: augeas commands="lensmatch" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"'
+  - code: 'action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"'
     description: Modify sshd_config in custom location
 
   - code: |
@@ -116,6 +116,7 @@ from collections import namedtuple
 import ctypes
 import re
 import shlex
+import operator
 
 if augeas:
     # Augeas C API `aug_span` function was introduced on the begining of 2011
@@ -289,7 +290,6 @@ def parse_commands(commands):
         'set': [path_parser, AnythingParser('value')],
         'rm': [path_parser],
         'match': [path_parser],
-        'lensmatch': [path_parser, NonEmptyParser('lens'), NonEmptyParser('file')],
         'ins': [NonEmptyParser('label'), OneOfParser('where', ['before', 'after']), path_parser],
         'transform': [NonEmptyParser('lens'), OneOfParser('filter', ['incl', 'excl']), NonEmptyParser('file')],
         'load': []
@@ -384,6 +384,13 @@ def execute(augeas_instance, commands):
     changed = False
     for command, params in commands:
         result = None
+        if params.has_key('lens') and params.has_key('file'):
+            lens = params['lens']
+            file_ = params['file']
+            params['path'] = "/files%s/%s" % ( file_ , params['path'] )
+            if command != 'transform':
+                augeas_instance.transform(lens, file_)
+                augeas_instance.load()
         if command == 'set':
             path = params['path']
             value = params['value']
@@ -412,18 +419,12 @@ def execute(augeas_instance, commands):
                 raise InsertError(command, params, augeas_instance)
             result = changed = True
         elif command == 'transform':
-            lens = params['lens']
-            file_ = params['file']
             excl = params['filter'] == 'excl'
             augeas_instance.transform(lens, file_, excl)
         elif command == 'load':
             augeas_instance.load()
-        elif command == 'lensmatch':
-            augeas_instance.transform(params['lens'], params['file'])
-            augeas_instance.load()
-            result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(params['path'])]
         else: # match
-            result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(**params)]
+            result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(params['path'])]
         results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
 
     try:
@@ -437,7 +438,7 @@ def main():
         argument_spec=dict(
             loadpath=dict(default=None),
             root=dict(default=None),
-            command=dict(required=False, choices=['set', 'rm', 'match', 'lensmatch', 'ins', 'transform', 'load']),
+            command=dict(required=False, choices=['set', 'rm', 'match', 'ins', 'transform', 'load']),
             path=dict(aliases=['name', 'context']),
             value=dict(default=None),
             commands=dict(default=None),
@@ -477,11 +478,13 @@ def main():
                       'filter': module.params['filter']}
         elif command == 'load':
             params = {}
-        elif command == 'lensmatch':
-            params = {'lens': module.params['lens'], 'file': module.params['file']}
-            params['path'] = "/files%s/%s" % ( params['file'] , module.params['path'] )
         else: # rm or match
             params = {'path': module.params['path']}
+        if operator.xor( bool(module.params['lens']) , bool(module.params['file']) ):
+            module.fail_json(msg='Both "lens" and "file" must be defined.')
+        if module.params['lens'] and module.params['file']:
+            params['lens'] = module.params['lens']
+            params['file'] = module.params['file']
         commands = [(command, params)]
     else:
         try:

@@ -10,10 +10,10 @@ Requirements:
 Options:
   - `command`
       - required: when `commands` is not used
-      - choices: [`set`, `ins`, `rm`, `match`, `lensmatch`, `transform`, `load`]
+      - choices: [`set`, `ins`, `rm`, `match`, `transform`, `load`]
       - description:
 
-         Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched. _lensmatch_ is an extended version of match (with slightly different usage), allowing to specify a lens to parse the file
+         Whether given path should be modified, inserted (ins command can be really used in multicommand mode), removed or matched.
 
         Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check second example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
 
@@ -21,7 +21,7 @@ Options:
 
   - `path`:
       - required: when any `command` is used
-      - description: Variable path. With `lensmatch`, it is the relative path within the file tree.
+      - description: Variable path. With `lens` and `file`, it is the relative path within the file tree.
   - `value`:
       - required: when `command = set`
       - description: Variable value.
@@ -34,10 +34,10 @@ Options:
       - choices: [`before`, `after`]
       - description: Position of node insertion against given `path`.
   - `lens`:
-     - required: when `command = lensmatch`
+     - required: false
      - description: Augeas lens to be loaded.
   - `file`:
-     - required: when `command = lensmatch`
+     - required: false
      - description: File to parse.
   - `commands`
       - required: when `command` is not used
@@ -100,12 +100,12 @@ Examples:
                                    load
                                    match "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers/*"'
 
-  - Lensmatch example - Is just a simplified command to match against files in
+  - Extended match example - Is just a simplified command to match against files in
     non-standard locations. In particular, allows example above can be written
     more concisely.
 
         - name: Modify sshd_config in custom location
-          action: augeas commands="lensmatch" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
+          action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
 
   - Insert example
 
