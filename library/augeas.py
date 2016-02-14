@@ -73,42 +73,37 @@ options:
     required: false
     description:
       - Colon-spearated list of directories that modules should be searched in
-examples:
-  - code: 'augeas: path=/files/etc/sudoers/spec[user=\\"sudo\\"]/host_group/command/tag value=PASSWD'
-    description: 'Simple value change'
-
-  - code: |
-      - name: Check wether given user is listed in sshd_config
-        action: augeas command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\\"{{ user }}\\"]"
-        register: user_entry
-      - name: Allow user to login through ssh
-        action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
-        when: "user_entry.result|length == 0"
-    description: "Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config"
-
-  - code: 'action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"'
-    description: Modify sshd_config in custom location
-
-  - code: |
-      - name: Add new host to /etc/hosts
-        action:  augeas commands=\'set /files/etc/hosts/01/ipaddr 192.168.0.1
-                                  set /files/etc/hosts/01/canonical pigiron.example.com
-                                  set /files/etc/hosts/01/alias[1] pigiron
-                                  set /files/etc/hosts/01/alias[2] piggy\'
-    description: "Bulk command execution."
-
-  - code: |
-      - name: Redifine eth0 interface
-        action:  augeas commands=\'rm /files/etc/network/interfaces/iface[.=\\"eth0\\"]
-                                  set /files/etc/network/interfaces/iface[last()+1] eth0
-                                  set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/family inet
-                                  set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/method manual
-                                  set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/pre-up "ifconfig $IFACE up"
-                                  set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/pre-down "ifconfig $IFACE down"\'
-    description: "Correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\\"eth0\\"])"
 notes:
    - On Debian Wheezy you also need to install libpython2.7, since python-augeas package wrongly does not list it as a requirement
    - When using lens & file, path is relative within the file and is concatenated by the module. This means that file="/mnt/etc/sshd_config" path="AllowUsers/*" is transformed into augeas '/files//mnt/etc/sshd_config/AllowUsers/*' path
+'''
+
+EXAMPLES = '''
+# Simple value change
+- augeas: path=/files/etc/sudoers/spec[user=\\"sudo\\"]/host_group/command/tag value=PASSWD
+
+# Quite complex modification - fetch values lists and append new value only if it doesn't exists already in config
+- augeas: command='match' path="/files/etc/ssh/sshd_config/AllowUsers/*[.=\\"{{ user }}\\"]"
+  register: user_entry
+- augeas: command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
+  when: "user_entry.result|length == 0"
+
+# Modify sshd_config in custom location
+- augeas: commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
+
+# Add new host to /etc/hosts (bulk command execution)
+- augeas: commands='set /files/etc/hosts/01/ipaddr 192.168.0.1
+                    set /files/etc/hosts/01/canonical pigiron.example.com
+                    set /files/etc/hosts/01/alias[1] pigiron
+                    set /files/etc/hosts/01/alias[2] piggy'
+
+# Redefine eth0 interface (augeas requires quotes in path matching expressions: iface[.=\\"eth0\\"])
+- augeas: commands='rm /files/etc/network/interfaces/iface[.=\\"eth0\\"]
+                    set /files/etc/network/interfaces/iface[last()+1] eth0
+                    set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/family inet
+                    set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/method manual
+                    set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/pre-up "ifconfig $IFACE up"
+                    set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/pre-down "ifconfig $IFACE down"'
 '''
 
 try:
