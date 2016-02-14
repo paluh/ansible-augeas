@@ -79,7 +79,15 @@ Quite complex modification - fetch values lists and append new value only if it 
       action: augeas command="set" path="/files/etc/ssh/sshd_config/AllowUsers/01" value="{{ user }}"
       when: "user_entry.result|length == 0"
 
-Bulk command execution
+Insert example
+
+    - name: Turn on ssh agent forwarding
+      action: augeas commands='ins ForwardAgent before "/files/etc/ssh/sshd_config"
+                               set "/files/etc/ssh/sshd_config/ForwardAgent" "yes"'
+
+### Bulk command execution
+
+The `commands`option allow to supply complex augeas command sequences
 
     - name: Add piggy to /etc/hosts
       action:  augeas commands='set /files/etc/hosts/01/ipaddr 192.168.0.1
@@ -104,12 +112,6 @@ more concisely.
 
     - name: Modify sshd_config in custom location
       action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
-
-Insert example
-
-    - name: Turn on ssh agent forwarding
-      action: augeas commands='ins ForwardAgent before "/files/etc/ssh/sshd_config"
-                               set "/files/etc/ssh/sshd_config/ForwardAgent" "yes"'
 
 Correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\"eth0\"])
 
