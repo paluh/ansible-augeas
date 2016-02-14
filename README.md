@@ -18,7 +18,7 @@ Augeas module which exposes simple API for `match`, `set`, `rm` and `ins` operat
       Every augeas action is a separate augeas session, so `ins` command has probably only sens in bulk mode (when command=`commands`)
 - `path`:
     - required: when any `command` is used
-    - description: Variable path. With `lens` and `file`, it is the relative path within the file tree.
+    - description: Variable path. With `lens` and `file`, it is the relative path within the file tree (see examples).
 - `value`:
     - required: when `command = set`
     - description: Variable value.
@@ -95,6 +95,7 @@ The `commands`option allow to supply complex augeas command sequences
                                 set /files/etc/hosts/01/alias[1] pigiron
                                 set /files/etc/hosts/01/alias[2] piggy'
 
+**NOTE : ** Although this transform example is kept, its action can be more easily done with lens & file options described below.  
 Transform examples - __it is important to load files after transformations__.
 You have to be aware that `load` command will "remove everything underneath
 `/augeas/files` and `/files`, regardless of whether any entries have been
@@ -106,13 +107,6 @@ commands and put `transforms`, then `load` and then other transformations.
                                load
                                match "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers/*"'
 
-Extended match example - Is just a simplified command to match against files in
-non-standard locations. In particular, allows example above can be written
-more concisely.
-
-    - name: Modify sshd_config in custom location
-      action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
-
 Correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\"eth0\"])
 
     - name: Redefine eth0 interface
@@ -122,6 +116,20 @@ Correct quoting in commands expressions (augeas requires quotes in path matching
                                set /files/etc/network/interfaces/iface[.=\"eth0\"]/method manual
                                set /files/etc/network/interfaces/iface[.=\"eth0\"]/pre-up "ifconfig $IFACE up"
                                set /files/etc/network/interfaces/iface[.=\"eth0\"]/pre-down "ifconfig $IFACE down"'
+
+### Managing non-standard files
+
+To manage files not automatically detected by augeas, we can use lens & file
+options, which are used by the module for an implicit `transform` command which
+makes the file available in simple `command` actions. When file is defined,
+the path given to ansible is relative to the file itself, as the module takes
+care of building the proper augeas path.
+
+Using them, the example about sshd_config in a custom location can be written as
+
+    - name: Fetch sshd allowed users in custom location
+      action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
+      register: ssh_allowed_users
 
 ## Debugging
 
