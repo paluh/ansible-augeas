@@ -29,50 +29,50 @@ description:
 version_added: "1.1"
 requirements:
   - augeas + lenses (augeas-lenses on Debian)
-  - "augeas python bindings (python-augeas on Debian, note: on Debian Wheezy you also need to install libpython2.7, since python-augeas package wrongly does not list it as a requirement)"
+  - augeas python bindings (see notes for debian)
 options:
   command:
     required: false
     choices: [ set, ins, rm, match ]
     description:
-      - 'Whether given path should be modified, inserted, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)'
+      - Whether given path should be modified, inserted, removed or matched. Command "match" passes results through "result" attribute - every item on this list is an object with "label" and "value" (check third example below). Other commands returns true in case of any modification (so this value is always equal to "changed" attribue - this make more sens in case of bulk execution)
   path:
     required: false
     description:
-      - 'Variable path. With `lens` and `file`, it is the relative path within the file tree.'
+      - Variable path. With `lens` and `file`, it is the relative path within the file tree (see notes)
   value:
     required: false
     description:
-      - 'Variable value (required for "set" command).'
+      - Variable value (required for "set" command)
   label:
     required: false
     description:
-      - 'Label for new node.'
+      - Label for new node
   where:
     required: false
     choices: [before, after]
     description:
-      - 'Position of node insertion against given path.'
+      - Position of node insertion against given path
   lens:
     required: false
     description:
-      - 'Augeas lens to be loaded.'
+      - Augeas lens to be loaded
   file:
     required: false
     description:
-      - 'File to parse.'
+      - File to parse
   commands:
     required: false
     description:
-      - 'Execute many commands at once (some configuration entries have to be created/updated at once - it is impossible to split them across multiple "set" calls). Standard shell quoting is allowed (rember to escape all quotes inside pahts/values - check last example). Expected formats: "set path value", "rm path" or "match path" (look into examples for more details). You can separate commands with any white chars (new lines, spaces etc.). Result is passed through "result" attribute and contains list of tuples: (command, command result).'
+      - Execute many commands at once (some configuration entries have to be created/updated at once - it is impossible to split them across multiple "set" calls). Standard shell quoting is allowed (rember to escape all quotes inside pahts/values - check last example). Expected formats: "set path value", "rm path" or "match path" (look into examples for more details). You can separate commands with any white chars (new lines, spaces etc.). Result is passed through "result" attribute and contains list of tuples: (command, command result)
   root:
     required: false
     description:
-      - 'The filesystem root - config files are searched realtively to this path (fallbacks to AUGEAS_ROOT or /).'
+      - The filesystem root - config files are searched realtively to this path (fallbacks to AUGEAS_ROOT or /)
   loadpath:
     required: false
     description:
-      - 'Colon-spearated list of directories that modules should be searched in.'
+      - Colon-spearated list of directories that modules should be searched in
 examples:
   - code: 'augeas: path=/files/etc/sudoers/spec[user=\\"sudo\\"]/host_group/command/tag value=PASSWD'
     description: 'Simple value change'
@@ -106,6 +106,9 @@ examples:
                                   set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/pre-up "ifconfig $IFACE up"
                                   set /files/etc/network/interfaces/iface[.=\\"eth0\\"]/pre-down "ifconfig $IFACE down"\'
     description: "Correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\\"eth0\\"])"
+notes:
+   - On Debian Wheezy you also need to install libpython2.7, since python-augeas package wrongly does not list it as a requirement
+   - When using lens & file, path is relative within the file and is concatenated by the module. This means that file="/mnt/etc/sshd_config" path="AllowUsers/*" is transformed into augeas '/files//mnt/etc/sshd_config/AllowUsers/*' path
 '''
 
 try:
