@@ -464,6 +464,7 @@ def main():
             commands=dict(default=None),
             where=dict(default=None),
             label=dict(default=None),
+            comment=dict(default=False, type='bool'),
             lens=dict(default=None),
             file=dict(defulat=None),
             filter=dict(default=None)
@@ -482,6 +483,8 @@ def main():
     commands = None
     if module.params['command'] is not None:
         command = module.params['command']
+        if module.params['comment'] and command not in ('ins', 'edit'):
+            module.fail_json(msg='You can only set "comment" with "ins" or "edit" commands.')
         if command == 'set':
             if module.params['value'] is None:
                 module.fail_json(msg='You should use "value" argument with "set" command.')
@@ -501,7 +504,7 @@ def main():
             if module.params['value'] is None:
                 module.fail_json(msg='You have to use "value" argument with "edit" command.')
             params = {'label': module.params['label'], 'path': module.params['path'],
-                      'value': module.params['value']}
+                      'value': module.params['value'], 'comment': module.params['comment']}
         elif command == 'transform':
             params = {'lens': module.params['lens'], 'file': module.params['file'],
                       'filter': module.params['filter']}
