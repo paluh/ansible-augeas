@@ -411,8 +411,12 @@ def execute(augeas_instance, commands):
             else:
                 result = False
         elif command == 'ins':
-            path = params['path']
             label = params['label']
+            if params['comment']:
+                path = os.path.dirname(params['path'])
+                path += '/#comment[ . =~ regexp("%s( |=).*") ]' % label
+            else:
+                path = params['path']
             where = params['where']
             try:
                 augeas_instance.insert(path, label, where == 'before')
@@ -421,11 +425,15 @@ def execute(augeas_instance, commands):
             result = changed = True
         elif command == 'edit':
             label = params['label']
-            path = params['path']
+            if params['comment']:
+                path = os.path.dirname(params['path'])
+                path += '/#comment[ . =~ regexp("%s( |=).*") ]' % label
+            else:
+                path = params['path']
             node = augeas_instance.match("%s/%s" % (os.path.dirname(path), label))
             if not node:
                 try:
-                    node = [ augeas_instance.insert(params['path'], label, False) ]
+                    node = [ augeas_instance.insert(path, label, False) ]
                 except ValueError:
                     raise InsertError(command, params, augeas_instance)
             path = "%s/%s" % (os.path.dirname(path), label)
@@ -445,7 +453,7 @@ def execute(augeas_instance, commands):
             augeas_instance.load()
         else: # match
             result = [{'label': s, 'value': augeas_instance.get(s)} for s in augeas_instance.match(params['path'])]
-        results.append((command + ' ' + ' '.join(p if p else '""' for p in params.values()), result))
+        results.append((command + ' ' + ' '.join(p if isinstance(p, str) else '""' for p in params.values()), result))
 
     try:
         augeas_instance.save()
