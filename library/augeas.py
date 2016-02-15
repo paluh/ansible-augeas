@@ -421,7 +421,10 @@ def execute(augeas_instance, commands):
             try:
                 augeas_instance.insert(path, label, where == 'before')
             except ValueError:
-                raise InsertError(command, params, augeas_instance)
+                try:
+                    augeas_instance.insert(params['path'], label, where == 'before')
+                except ValueError:
+                    raise InsertError(command, params, augeas_instance)
             result = changed = True
         elif command == 'edit':
             label = params['label']
@@ -435,7 +438,10 @@ def execute(augeas_instance, commands):
                 try:
                     node = [ augeas_instance.insert(path, label, False) ]
                 except ValueError:
-                    raise InsertError(command, params, augeas_instance)
+                    try:
+                        node = [ augeas_instance.insert(params['path'], label, False) ]
+                    except ValueError:
+                        raise InsertError(command, params, augeas_instance)
             path = "%s/%s" % (os.path.dirname(path), label)
             value = params['value']
             if augeas_instance.get(path) != value:
