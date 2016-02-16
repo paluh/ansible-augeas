@@ -509,7 +509,8 @@ def main():
             if module.params['path'] is None:
                 module.fail_json(msg='You have to use "path" argument with "ins" command.')
             params = {'label': module.params['label'], 'path': module.params['path'],
-                      'where': module.params['where'] or 'before'}
+                      'where': module.params['where'] or 'before',
+                      'comment': module.params['comment']}
         elif command == 'edit':
             if module.params['label'] is None:
                 module.fail_json(msg='You have to use "label" argument with "edit" command.')
