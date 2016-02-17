@@ -517,8 +517,6 @@ def main():
                 module.fail_json(msg='You have to use "label" argument with "edit" command.')
             if module.params['path'] is None:
                 module.fail_json(msg='You have to use "path" argument with "edit" command.')
-            if module.params['value'] is None:
-                module.fail_json(msg='You have to use "value" argument with "edit" command.')
             params = {'label': module.params['label'], 'path': module.params['path'],
                       'value': module.params['value'], 'comment': module.params['comment']}
         elif command == 'transform':
