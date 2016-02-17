@@ -433,13 +433,16 @@ def execute(augeas_instance, commands):
                 path += '/#comment[ . =~ regexp("%s( |=).*") ]' % label
             else:
                 path = params['path']
+            result = changed = False
             node = augeas_instance.match("%s/%s" % (os.path.dirname(path), label))
             if not node:
                 try:
                     node = [ augeas_instance.insert(path, label, False) ]
+                    result = changed = True
                 except ValueError:
                     try:
                         node = [ augeas_instance.insert(params['path'], label, False) ]
+                        result = changed = True
                     except ValueError:
                         raise InsertError(command, params, augeas_instance)
             path = "%s/%s" % (os.path.dirname(path), label)
@@ -450,8 +453,6 @@ def execute(augeas_instance, commands):
                 except ValueError:
                     raise SetError(command, params, augeas_instance)
                 result = changed = True
-            else:
-                result = False
         elif command == 'transform':
             excl = params['filter'] == 'excl'
             augeas_instance.transform(lens, file_, excl)
