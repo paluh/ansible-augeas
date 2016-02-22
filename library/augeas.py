@@ -455,8 +455,19 @@ def main():
         module.fail_json(msg='Could not import python augeas module.'
                              ' Please install augeas related packages and '
                              'augeas python bindings.')
+
+    # Set our flags, indicating if we have span support:
+    flags = getattr(Augeas, 'ENABLE_SPAN', 0)
+    # If we've been given an explicit lens to use, don't bother with the
+    # autoload shenanigans.
+    # This speeds up module invocation, and because the lens default incl/excl
+    # list overrides transform meaning we can't use a specific lens for an
+    # existing "known" file.
+    if module.params['lens'] is not None:
+      flags = flags | getattr(Augeas, 'NO_MODL_AUTOLOAD', 0)
+
     augeas_instance = Augeas(root=module.params['root'], loadpath=module.params['loadpath'],
-                             flags=getattr(Augeas, 'ENABLE_SPAN', 0))
+                             flags=flags)
     commands = None
     if module.params['command'] is not None:
         command = module.params['command']
