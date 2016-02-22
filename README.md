@@ -131,6 +131,12 @@ Using them, the example about sshd_config in a custom location can be written as
       action: augeas commands="match" lens="sshd" file="/home/paluh/programming/ansible/tests/sshd_config" path="AllowUsers/*"
       register: ssh_allowed_users
 
+When `file` and `lens` options are in use, this module prevents augeas from loading
+ all other lenses (it initializes augeas with `NO_MODL_AUTOLOAD` flag). This can
+ significantly speedup execution of your action. In other words - __you can also use `file`
+ and `lens` options, when you work on standard files, to make this processing faster__.
+
+
 ## Debugging
 
 If you want to check files which are accessible by augeas on server just run:
