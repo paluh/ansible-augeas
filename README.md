@@ -7,6 +7,12 @@ Augeas module which exposes simple API for `match`, `set`, `rm` and `ins` operat
 - augeas
 - augeas python bindings
 
+For example, you can include below playbook before calling ansible augeas plugin
+```
+- easy_install: name=pip state=latest
+- pip: name=python-augeas
+```
+
 ## Options
 
 - `command`
