@@ -429,6 +429,15 @@ def execute(augeas_instance, commands):
         augeas_instance.save()
     except IOError:
         raise SaveError(augeas_instance)
+
+    # https://github.com/hercules-team/augeas/wiki/Change-how-files-are-saved
+    changed_files = augeas_instance.match('/augeas/events/saved')
+    if len(changed_files) > 0:
+        result = [augeas_instance.get(s) for s in changed_files]
+        changed = True
+    else:
+        changed = False
+
     return results, changed
 
 def main():
