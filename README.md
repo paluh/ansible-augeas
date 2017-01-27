@@ -90,11 +90,9 @@ Another complex modification which uses `json_query` to parse results:
 
     - name: Get dns list
       action: augeas command='match' path="/files/etc/resolv.conf/*"
-      tags: dns
       register: dns_list
 
     - name: Add google and opendns servers to resolv.conf
-      tags: dns
       action: augeas commands="ins nameserver before /files/etc/resolv.conf/nameserver[1]
                                set /files/etc/resolv.conf/nameserver[1] '{{ item }}'"
       when: item not in dns_list|json_query('result[*].value')
@@ -102,7 +100,7 @@ Another complex modification which uses `json_query` to parse results:
         - "8.8.8.8"
         - "208.67.222.222"
 
-(Please send me pull request with additional examples of complex editing scenarios - I'm going to put them here.)
+(Please send me pull requests with additional examples of complex editing scenarios - I'm going to put them here.)
 
 Insert example
 
