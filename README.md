@@ -100,7 +100,6 @@ Another complex modification which uses `json_query` to parse results:
         - "8.8.8.8"
         - "208.67.222.222"
 
-(Please send me pull requests with additional examples of complex editing scenarios - I'm going to put them here.)
 
 Insert example
 
@@ -109,7 +108,7 @@ Insert example
                                set "/files/etc/ssh/sshd_config/ForwardAgent" "yes"'
 
 
-__Be careful with ansible "authomatic type casting__. If you remove quoting (if you change `'no'` to `no` and `'yes'` to `yes`) ansible will convert this values to booleans. As augeas is missing validation in case of this lens you are going to end up with unusable ssh configuration and you won't be able to login again to your host;-)
+__It's better to use quotation all the time when defining values__. If you remove quotation (if you change `'no'` to `no` and `'yes'` to `yes`) from values they are going to be parsed as boolean values (`yes` and `no` are correct boolean values in yaml). As augeas is missing validation in case of this lens you are going to end up with unusable ssh configuration and you won't be able to login again to your host;-)
 
     - name: Improve ssh server security
       action: augeas command=set path=/files/etc/ssh/sshd_config/{{ item.path }} value={{ item.value }}
@@ -187,3 +186,9 @@ If you want to check files which are accessible by augeas on server just run:
     ansible all -u USERNAME -i INVENTORY_FILE -m augeas -a \'command="match" path="/augeas/files//*"
 
 In case of any errors during augeas execution of your operations this module will return content of `/augeas//error` and you should be able to find problems related to your actions
+
+
+## Conributing
+
+Please send me pull requests with additional examples of complex editing scenarios. I'm going to put them here.
+
