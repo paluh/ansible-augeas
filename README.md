@@ -111,20 +111,24 @@ Insert example
 __It's better to use quotation all the time when defining values__. If you remove quotation (if you change `'no'` to `no` and `'yes'` to `yes`) from values declartions in below snippet they are going to be parsed as boolean values (`yes` and `no` are correct boolean values in yaml). As augeas is missing validation in case of this lens you are going to end up with unusable ssh configuration (with `RSAAuthentication True` etc.) and you won't be able to login again to your host;-)
 
     - name: Improve ssh server security
-      action: augeas command=set path=/files/etc/ssh/sshd_config/{{ item.path }} value={{ item.value }}
+      action: augeas command="set" path="/files/etc/ssh/sshd_config/{{ item.path }}" value="{{ item.value }}"
       with_items:
-        - path: PermitRootLogin
+        - path: 'PermitRootLogin'
           value: 'no'
-        - path: PasswordAuthentication
+        - path: 'PasswordAuthentication'
           value: 'no'
-        - path: UsePAM
+        - path: 'UsePAM'
           value: 'no'
-        - path: ChallengeResponseAuthentication
+        - path: 'ChallengeResponseAuthentication'
           value: 'no'
-        - path: RSAAuthentication
+        - path: 'X11Forwarding'
+          value: 'no'
+        - path: 'RSAAuthentication'
           value: 'yes'
-        - path: PubkeyAuthentication
+        - path: 'PubkeyAuthentication'
           value: 'yes'
+      notify:
+        - Restart sshd
 
 
 ### Bulk command execution
