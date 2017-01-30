@@ -108,7 +108,7 @@ Insert example
                                set "/files/etc/ssh/sshd_config/ForwardAgent" "yes"'
 
 
-__It's better to use quotation all the time when defining values__. If you remove quotation (if you change `'no'` to `no` and `'yes'` to `yes`) from values declartions in below snippet they are going to be parsed as boolean values (`yes` and `no` are correct boolean values in yaml). As augeas is missing validation in case of this lens you are going to end up with unusable ssh configuration (with `RSAAuthentication True` etc.) and you won't be able to login again to your host;-)
+__It's better to use quotation all the time when defining values__. If you remove quotation (if you change `'no'` to `no` and `'yes'` to `yes`) from values declartions in below snippet they are going to be parsed as boolean values (`yes` and `no` are correct boolean values in yaml). As augeas is missing validation in case of this lens you are going to end up with unusable ssh configuration (with `RSAAuthentication True` etc.) and you won't be able to login again to your host;-).
 
     - name: Improve ssh server security
       action: augeas command="set" path="/files/etc/ssh/sshd_config/{{ item.path }}" value="{{ item.value }}"
@@ -130,10 +130,24 @@ __It's better to use quotation all the time when defining values__. If you remov
       notify:
         - Restart sshd
 
+ Of course above snippet could be written in more efficient manner with bulk execution (usage of `commands`) - check next sections examples.
 
 ### Bulk command execution
 
-The `commands`option allow to supply complex augeas command sequences
+The `commands`option allow to supply multiple augeas command sequences:
+
+    - name: Improve ssh server security
+      augeas: commands="set /files/etc/ssh/sshd_config/PermitRootLogin no
+                        set /files/etc/ssh/sshd_config/PasswordAuthentication no
+                        set /files/etc/ssh/sshd_config/UsePAM no
+                        set /files/etc/ssh/sshd_config/ChallengeResponseAuthentication no
+                        set /files/etc/ssh/sshd_config/X11Forwarding no
+                        set /files/etc/ssh/sshd_config/RSAAuthentication yes
+                        set /files/etc/ssh/sshd_config/PubkeyAuthentication yes"
+      notify:
+        - Restart sshd
+
+Another example:
 
     - name: Add piggy to /etc/hosts
       action:  augeas commands='set /files/etc/hosts/01/ipaddr 192.168.0.1
@@ -141,19 +155,7 @@ The `commands`option allow to supply complex augeas command sequences
                                 set /files/etc/hosts/01/alias[1] pigiron
                                 set /files/etc/hosts/01/alias[2] piggy'
 
-**NOTE : ** Although this transform example is kept, its action can be more easily done with lens & file options described below.  
-Transform examples - __it is important to load files after transformations__.
-You have to be aware that `load` command will "remove everything underneath
-`/augeas/files` and `/files`, regardless of whether any entries have been
-modified or not" and that `load` is costly operation. You should order your
-commands and put `transforms`, then `load` and then other transformations.
-
-    - name: Modify sshd_config in custom location
-      action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/tests/sshd_config"
-                               load
-                               match "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers/*"'
-
-Correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\"eth0\"])
+Example of correct quoting in commands expressions (augeas requires quotes in path matching expressions: iface[.=\"eth0\"]):
 
     - name: Redefine eth0 interface
       action: augeas commands='rm /files/etc/network/interfaces/iface[.=\"eth0\"]
@@ -182,6 +184,17 @@ When `file` and `lens` options are in use, this module prevents augeas from load
  significantly speedup execution of your action. In other words - __you can also use `file`
  and `lens` options, when you work on standard files, to make this processing faster__.
 
+#### Transform example
+
+**NOTE : ** Although this transform examples are kept, its usually better to use `lens & file` action, which is more efficient and takes care of files reloading etc. Some scenarios require usage of `transform` tough.
+
+You should be careful when using `transform` and __remember to load files after transformations__. You have to be also aware that `load` command will __"remove everything underneath
+`/augeas/files` and `/files`, regardless of whether any entries have been modified or not"__ (http://augeas.net/docs/references/c_api/files/augeas-h.html#aug_load) sand that `load` is costly operation. You should order your commands and put `transforms`, then `load` and then other transformations.
+
+    - name: Modify sshd_config in custom location
+      action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/tests/sshd_config"
+                               load
+                               match "/files/home/paluh/programming/ansible/tests/sshd_config/AllowUsers/*"'
 
 ## Debugging
 
