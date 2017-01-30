@@ -165,10 +165,10 @@ Example of correct quoting in commands expressions (augeas requires quotes in pa
                                set /files/etc/network/interfaces/iface[.=\"eth0\"]/pre-up "ifconfig $IFACE up"
                                set /files/etc/network/interfaces/iface[.=\"eth0\"]/pre-down "ifconfig $IFACE down"'
 
-### Managing non-standard files
+### Managing non-standard files and optimizing execution
 
-To manage files not automatically detected by augeas, we can use lens & file
-options, which are used by the module for an implicit `transform` command which
+To manage files not automatically detected by augeas, we can use `lens & file
+options`, which are used by the module for an implicit `transform` command which
 makes the file available in simple `command` actions. When file is defined,
 the path given to ansible is relative to the file itself, as the module takes
 care of building the proper augeas path.
@@ -189,7 +189,7 @@ When `file` and `lens` options are in use, this module prevents augeas from load
 **NOTE : ** Although this transform examples are kept, its usually better to use `lens & file` action, which is more efficient and takes care of files reloading etc. Some scenarios require usage of `transform` tough.
 
 You should be careful when using `transform` and __remember to load files after transformations__. You have to be also aware that `load` command will __"remove everything underneath
-`/augeas/files` and `/files`, regardless of whether any entries have been modified or not"__ (http://augeas.net/docs/references/c_api/files/augeas-h.html#aug_load) sand that `load` is costly operation. You should order your commands and put `transforms`, then `load` and then other transformations.
+`/augeas/files` and `/files`, regardless of whether any entries have been modified or not"__ (http://augeas.net/docs/references/c_api/files/augeas-h.html#aug_load) and that `load` is costly operation. So it you sould order your commands and put all `transforms` on the beginning, then use `load` and then other transformations.
 
     - name: Modify sshd_config in custom location
       action: augeas commands='transform "sshd" "incl" "/home/paluh/programming/ansible/tests/sshd_config"
