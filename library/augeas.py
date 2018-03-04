@@ -154,7 +154,7 @@ if augeas:
                                                      r(label_start), r(label_end),
                                                      r(value_start), r(value_end),
                                                      r(span_start), r(span_end))
-                    if (ret < 0):
+                    if ret < 0:
                         raise ValueError("Error during span procedure")
 
                     return (filename.value, label_start.value, label_end.value,
@@ -171,15 +171,14 @@ class CommandsParseError(Exception):
         super(CommandsParseError, self).__init__(msg)
 
     def format_commands(self, commands):
-        return '\n'.join('%s %s' % (c, ' '.join(a if a else "''" for a in args.values())) for c,args in commands)
+        return '\n'.join('%s %s' % (c, ' '.join(a if a else "''" for a in args.values())) for c, args in commands)
 
 
 class MissingArgument(CommandsParseError):
 
     def __init__(self, command, value, already_parsed):
         if already_parsed:
-            msg = ('Missing argument "%s" in "%s" statement - already parsed statements:\n%s' %
-                    (value, command, self.format_commands(already_parsed)))
+            msg = ('Missing argument "%s" in "%s" statement - already parsed statements:\n%s' % (value, command, self.format_commands(already_parsed)))
         else:
             msg = 'Missing argument "%s" in "%s" statement' % (value, command)
         super(MissingArgument, self).__init__(msg)
@@ -294,7 +293,7 @@ def parse_commands(commands):
     }
     try:
         tokens = iter(shlex.split(commands, comments=False))
-    except ValueError, e:
+    except ValueError as e:
         raise TokenizerError("Commands parser error (commands should be correctly quoted strings): %s" % e.args[0])
     parsed = []
     for command in tokens:
@@ -308,7 +307,7 @@ def parse_commands(commands):
                 raise MissingArgument(command, parser.name, parsed)
             try:
                 params[parser.name] = parser(value)
-            except ParamParseError, e:
+            except ParamParseError as e:
                 raise CommandsParseError('Error parsing parameter value of command "%(command)s":\n%(exception)s' %
                                          {'command': command, 'exception': e})
         parsed.append((command, params))
@@ -335,7 +334,7 @@ class AugeasError(ExceptionWithMessage):
                 errors.append([(p, augeas_instance.get(p)) for p in augeas_instance.match(error + '/' + '*')])
 
         if errors:
-            errors = '\n\n'.join('\n'.join('%s: %s'%(p, v) for p,v in error) for error in errors)
+            errors = '\n\n'.join('\n'.join('%s: %s'%(p, v) for p, v in error) for error in errors)
             return ('Augeas has reported following problems '
                     ' (it\'s possible that some of them are unrelated to your action):\n\n%s' % errors)
         if self.error_type is not None:
@@ -385,7 +384,7 @@ def execute(augeas_instance, commands):
         if params.has_key('lens') and params.has_key('file'):
             lens = params['lens']
             file_ = params['file']
-            params['path'] = "/files%s/%s" % ( file_ , params['path'] )
+            params['path'] = "/files%s/%s" % (file_, params['path'])
             if command != 'transform':
                 augeas_instance.transform(lens, file_)
                 augeas_instance.load()
@@ -473,7 +472,7 @@ def main():
     # list overrides transform meaning we can't use a specific lens for an
     # existing "known" file.
     if module.params['lens'] is not None:
-      flags = flags | getattr(Augeas, 'NO_MODL_AUTOLOAD', 0)
+        flags = flags | getattr(Augeas, 'NO_MODL_AUTOLOAD', 0)
 
     augeas_instance = Augeas(root=module.params['root'], loadpath=module.params['loadpath'],
                              flags=flags)
@@ -498,7 +497,7 @@ def main():
             params = {}
         else: # rm or match
             params = {'path': module.params['path']}
-        if operator.xor( bool(module.params['lens']) , bool(module.params['file']) ):
+        if operator.xor(bool(module.params['lens']), bool(module.params['file'])):
             module.fail_json(msg='Both "lens" and "file" must be defined.')
         if module.params['lens'] and module.params['file']:
             params['lens'] = module.params['lens']
@@ -507,11 +506,11 @@ def main():
     else:
         try:
             commands = parse_commands(module.params['commands'])
-        except CommandsParseError, e:
+        except CommandsParseError as e:
             module.fail_json(msg=e.msg)
     try:
         results, changed = execute(augeas_instance, commands)
-    except AugeasError, e:
+    except AugeasError as e:
         module.fail_json(msg=e.msg)
 
     # in case of single command execution return only one result
