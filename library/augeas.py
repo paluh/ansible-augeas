@@ -302,7 +302,7 @@ def parse_commands(commands):
         params = {}
         for parser in COMMANDS[command]:
             try:
-                value = tokens.next()
+                value = tokens.__next__next()
             except StopIteration:
                 raise MissingArgument(command, parser.name, parsed)
             try:
