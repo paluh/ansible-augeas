@@ -381,7 +381,7 @@ def execute(augeas_instance, commands):
     changed = False
     for command, params in commands:
         result = None
-        if params.has_key('lens') and params.has_key('file'):
+        if 'lens' in params and 'file' in params:
             lens = params['lens']
             file_ = params['file']
             params['path'] = "/files%s/%s" % (file_, params['path'])
