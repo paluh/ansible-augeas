@@ -451,7 +451,7 @@ def main():
             where=dict(default=None),
             label=dict(default=None),
             lens=dict(default=None),
-            file=dict(defulat=None),
+            file=dict(default=None),
             filter=dict(default=None)
         ),
         mutually_exclusive=[['commands', 'command'], ['commands', 'value'],
