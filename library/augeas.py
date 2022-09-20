@@ -384,8 +384,8 @@ def execute(augeas_instance, commands):
         if 'lens' in params and 'file' in params:
             lens = params['lens']
             file_ = params['file']
-            params['path'] = "/files%s/%s" % (file_, params['path'])
             if command != 'transform':
+                params['path'] = "/files%s/%s" % (file_, params['path'])
                 augeas_instance.transform(lens, file_)
                 augeas_instance.load()
         if command == 'set':
