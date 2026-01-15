@@ -440,6 +440,7 @@ def execute(augeas_instance, commands):
     return results, changed
 
 def main():
+    from ansible.module_utils.basic import AnsibleModule
     module = AnsibleModule(
         argument_spec=dict(
             loadpath=dict(default=None),
